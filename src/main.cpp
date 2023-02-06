@@ -365,7 +365,6 @@ int main(int argc, char **argv) {
       //f(iV) = std::fmod(calculateSolidAngle( gridPoints.row(iV), tri0) + calculateSolidAngle( gridPoints.row(iV), tri1),(4*M_PI));
       // SolidAngleResults angles = calculateSolidAngle( gridPoints.row(iV), curvePoints);
       double res = sphereicalHarmonic( gridPoints.row(iV));
-      printf("res %f\n", res);
       f(iV) = res;
   }
 
