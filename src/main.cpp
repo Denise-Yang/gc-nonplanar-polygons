@@ -72,6 +72,7 @@ const std::array<std::array<size_t, 4>, 6> stencilHex =
 
 // == Geometry data
 double wx = 2, wy = 2, wz = 2;
+double sphere_shift = 1.25;
 size_t N = 20;
 size_t numPoints = 4;
 Eigen::MatrixXd gridPoints;
@@ -114,21 +115,21 @@ double getMinDis(Eigen::Vector3d pt, Eigen::MatrixXd curvePoints){
 
 }
 
-bool outsideSphere( Eigen::Vector3d pos)
+bool outsideSphere( Eigen::Vector3d pos, double r)
 {
     float x = pos[0];
     float y = pos[1];
     float z = pos[2];
 
     // printf("(%f,%f,%f) is outside sphere %d\n",x,y,z,(x*x + y*y + z*z - 1.f > 0.f));
-    return (x*x + y*y + z*z - 1.f > 0.f);
+    return (x*x + y*y + z*z - r*r > 0.f);
 }
 double sphereicalHarmonic(Eigen::Vector3d pt){
     double x = pt[0];
     double y = pt[1];
     double z = pt[2];
     //shift it more than needed, such that 0 < lower bound of domain such that the ray can exit the domain from the lower bound side if needed
-    double res = pow(x,2.f) - pow(z,2.f) + y + 2.0;
+    double res = pow(x,2.f) - pow(z,2.f) +1;
     return res;
 
 }
@@ -211,14 +212,14 @@ void initCurve(){
     
 // double traceSphericalHarmonic(Eigen::Vector3d o, Eigen::Vector3d dir, double r){
 
-float intersect(Eigen::Vector3d origin, Eigen::Vector3d dir) 
+float intersect(Eigen::Vector3d origin, Eigen::Vector3d dir, double r) 
 {
         double t0, t1,t; // solutions for t if the ray intersects
         // analytic solution
         Eigen::Vector3d L = origin - center;
         double a = dir.dot(dir);
         double b = 2 * dir.dot(L);
-        double c = L.dot(L) - 1.f;
+        double c = L.dot(L) - r*r;
         double discr = b * b - 4.f * a * c;
         if (discr < 0.f) return -1.f;
         else if (discr == 0.f) t0 = t1 = - 0.5 * b / a;
@@ -239,7 +240,7 @@ float intersect(Eigen::Vector3d origin, Eigen::Vector3d dir)
         t = t0;
         printf("final t0 %f  (%f, %f)\n", t, t0, t1);
 
-        return t+ .002;
+        return t;
 }
 
 // }
@@ -254,7 +255,7 @@ std::vector<HSphere> harnackTrace(Eigen::Vector3d origin, Eigen::Vector3d dir, E
 
     Eigen::Vector3d v = origin; 
     double r = 0.f;
-    float t = intersect(v, dir);
+    float t = intersect(v, dir, 1.f);
     // printf("sphere intersect at time %f, for dir %f,%f,%f\n",t,dir[0],dir[1],dir[2]);
     if (t < 0.f){
       return spheres;
@@ -265,7 +266,7 @@ std::vector<HSphere> harnackTrace(Eigen::Vector3d origin, Eigen::Vector3d dir, E
       hiBound = 10.f;
       
     }
-    while (!outsideSphere(v)){
+    while (!outsideSphere(v, 1.f)){
        
         Eigen::Vector3d shift = Eigen::Vector3d(0,0,0);
         double fx = sphereicalHarmonic(v);
@@ -348,33 +349,33 @@ int main(int argc, char **argv) {
 
   }
 
-  
-  ptCloud = polyscope::registerPointCloud("rayPoints", samplePoints);
-  harnackPtCloud = polyscope::registerPointCloud("harnackSpheres", samplePoints);
+  //Harnack Tracing code
+  // ptCloud = polyscope::registerPointCloud("rayPoints", samplePoints);
+  // harnackPtCloud = polyscope::registerPointCloud("harnackSpheres", samplePoints);
 
   //enable visualization for max harnack step. 
   // spherePtCloud = polyscope::registerPointCloud("sphereRadii", samplePoints);
   // auto sr = spherePtCloud->addScalarQuantity("sphereRadius", sphereRadius); // add the quantity
   // spherePtCloud->setPointRadiusQuantity(sr, false);
 
-  harnackPtCloud->setTransparency(0.25);
-  auto hr = harnackPtCloud->addScalarQuantity("harnackRadius", harnackRadius); // add the quantity
-  harnackPtCloud->setPointRadiusQuantity(hr, false);
+  // harnackPtCloud->setTransparency(0.25);
+  // auto hr = harnackPtCloud->addScalarQuantity("harnackRadius", harnackRadius); // add the quantity
+  // harnackPtCloud->setPointRadiusQuantity(hr, false);
 
   //create visual spherical bound for harmmonic function
-  bounds.push_back(center);
-  boundingSphere = polyscope::registerPointCloud("boundingSphere", bounds);
-  boundingSphere->setPointRadius(1.f,false);
-  boundingSphere->setTransparency(0.5);
+  // bounds.push_back(center);
+  // boundingSphere = polyscope::registerPointCloud("boundingSphere", bounds);
+  // boundingSphere->setPointRadius(1.f,false);
+  // boundingSphere->setTransparency(0.5);
   
 
 
   Eigen::VectorXd f(gridPoints.rows());
   for (Eigen::Index iV = 0; iV < gridPoints.rows(); iV++) {
-      //f(iV) = std::fmod(calculateSolidAngle( gridPoints.row(iV), tri0) + calculateSolidAngle( gridPoints.row(iV), tri1),(4*M_PI));
-      // SolidAngleResults angles = calculateSolidAngle( gridPoints.row(iV), curvePoints);
-      double res = sphereicalHarmonic( gridPoints.row(iV));
-      f(iV) = res;
+      f(iV) = std::fmodf(calculateSolidAngle( gridPoints.row(iV), curvePoints).shifted,(4*M_PI));
+      SolidAngleResults angles = calculateSolidAngle( gridPoints.row(iV), curvePoints);
+      // double res = sphereicalHarmonic( gridPoints.row(iV));
+      //f(iV) = res;
   }
 
   // Register the curve with polyscope
@@ -385,7 +386,7 @@ int main(int argc, char **argv) {
  
   scalarQ = psMesh->addVertexScalarQuantity("scalar Q", f);
   scalarQ->setEnabledLevelSet(true);
-  scalarQ->setLevelSetValue(1.f);
+  scalarQ->setLevelSetValue(3.f);
 
   // Give control to the polyscope gui
   polyscope::show();
