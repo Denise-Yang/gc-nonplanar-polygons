@@ -19,9 +19,9 @@ const vec3 sphereCenter = vec3(0.f,0.f,0.f);
 const float outerRadius = 1.25;
 
 const float M_PI = 3.1415;
-const float numPoints = 3.f;
+const float numPoints = 4.f;
 const int len = int(numPoints);
-vec3 pts[4] = vec3[4]( vec3(1.,0.,.0), vec3(0.,1.,0.), vec3(0.,0.,.0), vec3(0.,-1.,0) );
+vec3 pts[4] = vec3[4]( vec3(1.,0.,.5), vec3(0.,1.,0.), vec3(-1.,0.,.5), vec3(0.,-1.,0) );
 
 //const float shift = -.25*(-1.f - 4.f * outerRadius*outerRadius);
 //const float shift =  outerRadius*outerRadius + outerRadius;
@@ -315,7 +315,7 @@ bool closeToLevelset(float ang, float levelset){
     vec2 angle = makeComplex(ang);
     vec2 level = makeComplex(levelset);
     float dis = length(angle - level);
-    float epsilon = .01;
+    float epsilon = .1;
     return dis <  epsilon;
 }
 
@@ -350,8 +350,8 @@ bool harnack(vec3 ro, vec3 rd,  inout vec3 pos, inout bool maxSteps, float time)
     float c = 0.f;
     float domainRadius = 1.f;
     //float shift = findShift(domainRadius);
-    float shift = 3.f*M_PI;
-    float levelset =  1.999f*M_PI*cos(iTime)+2.f*M_PI;
+    float shift = 4.f*M_PI;
+    float levelset =  1.8*M_PI;
     maxSteps = false;
     
     
@@ -361,7 +361,7 @@ bool harnack(vec3 ro, vec3 rd,  inout vec3 pos, inout bool maxSteps, float time)
     
     //if (t0 < 0.f && t1 < 0.f) return false;
     //if (t0  > 0.f) t = t0;
-    tmax = 5.f;
+    tmax = 10.f;
     
     
     pos = ro+t*rd;
@@ -394,7 +394,7 @@ bool harnack(vec3 ro, vec3 rd,  inout vec3 pos, inout bool maxSteps, float time)
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {
     //toggle harnacks
-    bool doHarnacks = true;
+    bool doHarnacks = false;
     bool maxSteps = false;
     
     // camera movement	
@@ -455,14 +455,8 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
         }
         else if( didHit )
         {
-            vec3 nor;
-            if (doHarnacks){
-                nor = gradShade(pos);
-            } else{ 
-                
-                nor = calcNormal(pos);
-             
-            }
+            vec3 nor = gradShade(pos);
+            
             float dif = clamp( dot(nor,vec3(0.57703)), 0.0, 1.0 );
             float amb = 0.5 + 0.5*dot(nor,vec3(0.0,1.0,0.0));
             col = vec3(0.2,0.3,0.4)*amb + vec3(0.8,0.7,0.5)*dif;
