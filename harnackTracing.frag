@@ -33,7 +33,7 @@ vec2 makeComplex(float angle){
 
 /** Start Helper Functions**/
 float getDis(vec3 pt1, vec3 pt2){
-  return sqrt(pow(pt1[0]-pt2[0],2.f)  + pow(pt1[1]-pt2[1],2.f) + pow(pt1[2]-pt2[2],2.f));
+  return sqrt(dot(pt1-pt2, pt1-pt2));
 
 }
 
@@ -234,13 +234,19 @@ vec3 calcNormal( in vec3 pos )
 					  e.xxx*map( pos + e.xxx*eps ) );
 }
 
-vec3 gradShade( in vec3 pos )
+vec3 gradShade( in vec3 p )
 {
-    float x = pos[0];
-    float y = pos[1];
-    float z = pos[2];
-    float mag = sqrt(4.f*x*x + 1.f + 4.f*z*z);
-    return vec3(x/mag, y/mag, z/mag);
+    vec3 grad = vec3(0.,0.,0.);
+    for (int i = 0; i < len; i++){
+         vec3 p0 = pts[i];
+         vec3 p1 = pts[(i+1)%len];
+         vec3 g0 = p0 - p;
+         vec3 g1 = p1 - p;
+         vec3 n = cross(g1,g0);
+         grad += n/dot(n,n) * ((-dot(g0,g1) + dot(g0,g0))/length(g0) + (-dot(g0,g1) + dot(g1,g1))/length(g1));
+    }
+    return grad/length(grad);
+    
 }
 
 
@@ -451,7 +457,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
         {
             vec3 nor;
             if (doHarnacks){
-                nor = calcNormal(pos);
+                nor = gradShade(pos);
             } else{ 
                 
                 nor = calcNormal(pos);
