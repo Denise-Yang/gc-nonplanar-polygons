@@ -23,7 +23,7 @@ const float numPoints = 4.f;
 const int len = int(numPoints);
 const float numTri = 2.f;
 const int len2 = int(numTri);
-vec3 pts[4] = vec3[4]( vec3(1.,0.,0.), vec3(0.,1.,0.), vec3(-1.,0.,0.), vec3(0.,-1.,0.) );
+vec3 pts[4] = vec3[4]( vec3(1.,0.,1.), vec3(0.,1.,0.), vec3(-1.,0.,1.), vec3(0.,-1.,0.) );
 vec3 tri[2] = vec3[2]( vec3(0,1,2), vec3(0,2,3));
 
 
@@ -171,9 +171,9 @@ float calculateSolidAngle(vec3 x, float levelset, float shift ){
      
   }
 
-  return angleSum;
+  float sa = 2.f*M_PI - angleSum;
   //float solidAng = exteriorAngleSum + (2.f - numPoints) *M_PI;
-  // return mod(sa - levelset, 4.f*M_PI) + shift ;
+  return mod(sa - levelset, 4.f*M_PI) + shift ;
 }
 
 float map( in vec3 pos )
@@ -352,7 +352,7 @@ bool harnack(vec3 ro, vec3 rd,  inout vec3 pos, inout bool maxSteps, float time)
     float domainRadius = 1.f;
     //float shift = findShift(domainRadius);
     float shift = 4.f*M_PI;
-    float levelset =  1.67*M_PI;
+    float levelset =  2.*M_PI + 2.*M_PI*cos(iTime);
     maxSteps = false;
     
   
@@ -389,7 +389,7 @@ bool harnack(vec3 ro, vec3 rd,  inout vec3 pos, inout bool maxSteps, float time)
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {
     //toggle harnacks
-    bool doHarnacks = false;
+    bool doHarnacks = true;
     bool maxSteps = false;
     bool hitSphere = false;
     
