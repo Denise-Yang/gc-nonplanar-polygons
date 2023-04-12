@@ -19,13 +19,57 @@ const vec3 sphereCenter = vec3(0.f,0.f,0.f);
 const float outerRadius = 1.25;
 
 const float M_PI = 3.1415;
-const float numPoints = 4.f;
+const float numPoints = 13.f;
 const int len = int(numPoints);
-const float numTri = 2.f;
+const float numTri = 12.f;
 const int len2 = int(numTri);
-vec3 pts[4] = vec3[4]( vec3(1.,0.,1.), vec3(0.,1.,0.), vec3(-1.,0.,1.), vec3(0.,-1.,0.) );
-vec3 tri[2] = vec3[2]( vec3(0,1,2), vec3(0,2,3));
+//vec3 pts[6] = vec3[6]( vec3(1.,0.,1.), vec3(0.,1.,0.), vec3(-1.,0.,.5),  vec3(-.5,.8,.6),vec3(0.,-1.,0.),vec3(0.2,.0,0.) );
+//vec3 tri[5] = vec3[5]( vec3(0,1,5), vec3(1,2,5), vec3(2,3,5), vec3(3,4,5), vec3(4,0,5));
+/*
+vec3 pts[9] = vec3[9]( vec3(.25,0.5,0.), 
+                        vec3(0.16667,.16667,0.3333), 
+                        vec3(.5,0.,.0),  
+                        vec3(.83333,.33333,.0),
+                        vec3(0.75,.25,0.5),
+                        vec3(0.3333,.3333,0.6667),
+                        vec3(0.5,.75,0.5),
+                        vec3(0.6667,.6667,0.),
+                        vec3(0.4,0.4,0.2)
+                        );                      
 
+vec3 pts[9] = vec3[9]( vec3(1.,2.,0.), 
+                        vec3(0.6668,.6668,1.333), 
+                        vec3(2.,0.,.0),  
+                        vec3(3.333,1.33333,.0),
+                        vec3(3.,1.,2.),
+                        vec3(1.3333,1.3333,2.6667),
+                        vec3(2.,3.,2.),
+                        vec3(2.6668,2.6668,0.),
+                        vec3(0.,0.,0.)
+                        );
+vec3 tri[8] = vec3[8]( vec3(0,1,8), vec3(1,2,8), vec3(2,3,8), vec3(3,4,8), vec3(4,5,8),vec3(5,6,8),vec3(6,7,8),vec3(7,0,8));
+
+                        */
+                        
+vec3 pts[13] = vec3[13]( vec3(.833,.1667,0.333), 
+                        vec3(0.875,.25,0.0), 
+                        vec3(.5,0.,.0),  
+                        vec3(.125,.125,.25),
+                        vec3(0.1667,.333,0.0),
+                        vec3(0.75,.5,0.),
+                        vec3(0.6667,.3333,0.6667),
+                        vec3(0.375,.375,0.25),
+                        vec3(0.5,0.75,0.5),
+                        vec3(0.625,.25,0.0),
+                        vec3(0.333,0.6667,0.),
+                        vec3(0.25,0.25,0.5),
+                        vec3(0.0,0.0,0.)
+                        );
+//vec3 tri[12] = vec3[12]( vec3(0,1,12), vec3(1,2,12), vec3(2,3,12), vec3(3,4,8), vec3(4,5,8),vec3(5,6,8),vec3(6,7,8),vec3(7,0,8), vec3(4,5,8),vec3(5,6,8),vec3(6,7,8),vec3(7,0,8));
+
+
+
+//vec3 tri[2] = vec3[2]( vec3(0,1,2), vec3(0,2,3));
 
 //const float shift = -.25*(-1.f - 4.f * outerRadius*outerRadius);
 //const float shift =  outerRadius*outerRadius + outerRadius;
@@ -158,11 +202,16 @@ float calculateSolidAngle(vec3 x, float levelset, float shift ){
     vec3 p2, vX0, vX1, vX2, v, u, c;
     float d, dir;
 
-    
+    /*
     p0 = pts[int(tri[i][0])];
-    
     p1 = pts[int(tri[i][1])];
     p2 = pts[int(tri[i][2])];
+    */
+    
+    p0 = pts[i];
+    p1 = pts[(i+1)%(len2)];
+    p2 = pts[len2];
+    
 
 
     float theta =  triangleSA(p0,p1,p2,x);
@@ -236,9 +285,9 @@ vec3 calcNormal( in vec3 pos )
 vec3 gradShade( in vec3 p )
 {
     vec3 grad = vec3(0.,0.,0.);
-    for (int i = 0; i < len; i++){
+    for (int i = 0; i < len-1; i++){
          vec3 p0 = pts[i];
-         vec3 p1 = pts[(i+1)%len];
+         vec3 p1 = pts[(i+1)%(len-1)];
          vec3 g0 = p0 - p;
          vec3 g1 = p1 - p;
          vec3 n = cross(g1,g0);
@@ -272,7 +321,7 @@ bool traceVertices(vec3 ro, vec3 rd, inout vec3 finalPos){
     float t1 = 0.0;
     bool didHit;
     for (int i = 0; i < int(numPoints); i ++){
-        didHit = intersectSphere(ro, rd, pts[i], .05, t0, t1);
+        didHit = intersectSphere(ro, rd, pts[i], .03, t0, t1);
         if (didHit){
             finalPos = ro + getCorrectTime(t0,t1)*rd;
             return true;
@@ -352,7 +401,7 @@ bool harnack(vec3 ro, vec3 rd,  inout vec3 pos, inout bool maxSteps, float time)
     float domainRadius = 1.f;
     //float shift = findShift(domainRadius);
     float shift = 4.f*M_PI;
-    float levelset =  2.*M_PI + 2.*M_PI*cos(iTime);
+    float levelset =  2.*M_PI + 1.*M_PI;//*cos(iTime);
     maxSteps = false;
     
   
@@ -392,9 +441,12 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     bool doHarnacks = true;
     bool maxSteps = false;
     bool hitSphere = false;
+    bool rotate = true;
     
     // camera movement	
-	float an = .8*iTime;
+	float an;
+    if (rotate) an = .8*iTime;
+    else an = .8;
 	vec3 ro = vec3( 3.0*cos(an), 1.f, 3.0*sin(an) );
 	//vec3 ro = vec3( 2., 0.0, 2. );
     vec3 ta = vec3( 0.0, 0.0, 0.0 );
@@ -404,6 +456,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     vec3 vv = normalize( cross(uu,ww));
     
     float f1,f2;
+    vec3 vertexPos, fnPos;
     
     
     vec3 tot = vec3(0.0);
@@ -427,12 +480,12 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
         vec3 pos;
         bool didHit = false;
         
-        bool hitVertex  = traceVertices(ro, rd, pos);
+        bool hitVertex  = traceVertices(ro, rd, vertexPos);
        
         if (doHarnacks){
-            didHit = harnack(ro,rd, pos, maxSteps, iTime);
+            didHit = harnack(ro,rd, fnPos, maxSteps, iTime);
         } else {
-            didHit = raymarchSA(ro,rd,tmax, pos, hitSphere );
+            didHit = raymarchSA(ro,rd,tmax, fnPos, hitSphere );
         }
     
         // shading/lighting	
@@ -441,8 +494,8 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
             col =  vec3(1.f,0.0,0.0);
         }
         
-        else if (hitVertex){
-            vec3 nor = calcNormal(pos);
+        else if (hitVertex && (length(vertexPos-ro) < length(fnPos-ro))){
+            vec3 nor = calcNormal(vertexPos);
             float dif = clamp( dot(nor,vec3(0.57703)), 0.0, 1.0 );
             float amb = 0.5 + 0.5*dot(nor,vec3(0.0,1.0,0.0));
             col = vec3(0.05,0.5,0.05) + vec3(0.8,0.7,0.5)*dif;
@@ -450,7 +503,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
         }
         else if( didHit )
         {
-            vec3 nor = gradShade(pos);
+            vec3 nor = gradShade(fnPos);
             
             
             float dif = clamp( dot(nor,vec3(0.57703)), 0.0, 1.0 );
